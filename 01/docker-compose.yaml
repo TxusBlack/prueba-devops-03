@@ -1,0 +1,20 @@
+services:
+  grpc-server:
+    build: ./server
+    ports:
+      - "50051:50051"
+    networks:
+      - backend-network
+
+  fastapi-client:
+    build: ./client
+    ports:
+      - "8000:8000"
+    depends_on:
+      - grpc-server
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
