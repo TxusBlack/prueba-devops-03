@@ -2,8 +2,8 @@ name: Check Cost Changes with Infracost
 
 on:
   pull_request:
-    branches: [ master ]
-    # types: [opened, synchronize]
+    # branches: [ master ]
+    types: [opened, synchronize]
 
 jobs:
   infracost:
