@@ -1,0 +1,27 @@
+name: Check Cost Changes with Infracost
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  infracost:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Install Infracost
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          infracost --version  # Verifica la instalación de Infracost
+        
+      - name: Run Infracost
+        run: infracost --git --show-skipped --format json > infracost.json
+        
+      - name: Comment on GitHub PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: infracost comment github --path=infracost.json --repo=$GITHUB_REPOSITORY --pull-request=$PR_NUMBER --github-token=$GITHUB_TOKEN --behavior=update
