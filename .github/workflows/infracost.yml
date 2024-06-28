@@ -12,7 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      path: 02/terraform
 
     - name: Install infracost
       run: curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
@@ -25,7 +24,8 @@ jobs:
 
     - name: Check for changes in costs
       run: |
-        changes=$(cat 02/terraform/infracost.json)
+        cd 02/terraform
+        changes=$(cat infracost.json)
         if [ -n "$changes" ]; then
           echo "::set-output name=cost_changes::true"
         else
