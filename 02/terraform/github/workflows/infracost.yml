@@ -1,0 +1,45 @@
+name: Check Cost Changes with Infracost
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  infracost:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install infracost
+      run: curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+    - name: Run infracost diff
+      id: infracost
+      run: infracost --git --format json > infracost.json || echo "Infracost failed"
+
+    - name: Check for changes in costs
+      run: |
+        changes=$(cat infracost.json)
+        if [ -n "$changes" ]; then
+          echo "::set-output name=cost_changes::true"
+        else
+          echo "::set-output name=cost_changes::false"
+        fi
+
+    - name: Comment on Pull Request if there are cost changes
+      if: steps.infracost.outputs.cost_changes == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+        infracost comment github --path=infracost.json \
+          --repo=$GITHUB_REPOSITORY \
+          --pull-request=$PR_NUMBER \
+          --github-token=$GITHUB_TOKEN \
+          --behavior=update
+
+    - name: Fail if there are cost changes
+      if: steps.infracost.outputs.cost_changes == 'true'
+      run: exit 1
